@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>weebing sillies - a game made by thossc.art</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #1a1a2e;
+            color: #f0f0f0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            height: 700px;
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        #background {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #6a5acd, #9370db, #d8bfd8);
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="20" cy="20" r="3" fill="%23ffffff" opacity="0.3"/><circle cx="70" cy="40" r="5" fill="%23ffffff" opacity="0.2"/><circle cx="50" cy="80" r="4" fill="%23ffffff" opacity="0.25"/><circle cx="85" cy="15" r="2" fill="%23ffffff" opacity="0.4"/><circle cx="30" cy="65" r="6" fill="%23ffffff" opacity="0.15"/></svg>');
+            z-index: 1;
+            transition: filter 0.5s ease;
+        }
+        
+        #background::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+        
+        .character {
+            position: absolute;
+            bottom: 220px;
+            width: 300px;
+            height: 400px;
+            transition: all 0.5s ease;
+            z-index: 2;
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+        }
+        
+        #thossc {
+            left: 100px;
+        }
+        
+        #minh-khoi {
+            right: 100px;
+        }
+        
+        .character.active {
+            transform: translateY(-20px);
+            filter: brightness(1.1) drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
+        }
+        
+        .character.inactive {
+            filter: brightness(0.7) grayscale(0.2);
+            transform: translateY(10px);
+        }
+        
+        .character-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: bottom;
+        }
+        
+        #dialogue-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 200px;
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            z-index: 3;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border-top: 3px solid #9370db;
+        }
+        
+        #name-box {
+            width: 300px;
+            height: 50px;
+            background: linear-gradient(to right, #9370db, #6a5acd);
+            display: flex;
+            align-items: center;
+            padding-left: 20px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: -10px;
+            z-index: 4;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        #text-box {
+            flex: 1;
+            background-color: rgba(255, 255, 255, 0.95);
+            color: #333;
+            border-radius: 12px;
+            padding: 25px;
+            font-size: 1.3rem;
+            line-height: 1.6;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 2px solid #9370db;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 5;
+        }
+        
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid #9370db;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(147, 112, 219, 0.8);
+            transform: scale(1.1);
+        }
+        
+        #save-menu, #load-menu {
+            position: absolute;
+            top: 80px;
+            right: 20px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            border: 2px solid #9370db;
+            display: none;
+        }
+        
+        .menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #555;
+        }
+        
+        .close-menu {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .slot {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        
+        .slot:hover {
+            background: rgba(147, 112, 219, 0.2);
+            border-color: #9370db;
+        }
+        
+        .slot-date {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 5px;
+        }
+        
+        #skip-indicator {
+            position: absolute;
+            bottom: 210px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 5;
+            border: 1px solid #9370db;
+        }
+        
+        #auto-play-indicator {
+            position: absolute;
+            bottom: 210px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(106, 90, 205, 0.9);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: none;
+            z-index: 5;
+            border: 1px solid #9370db;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .choice-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .choice-btn {
+            background: linear-gradient(to right, #6a5acd, #9370db);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+        
+        .choice-btn:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 15px rgba(106, 90, 205, 0.4);
+        }
+        
+        @media (max-width: 1100px) {
+            #game-container {
+                height: 600px;
+            }
+            
+            .character {
+                width: 250px;
+                height: 350px;
+            }
+            
+            #thossc {
+                left: 50px;
+            }
+            
+            #minh-khoi {
+                right: 50px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            #game-container {
+                height: 500px;
+            }
+            
+            .character {
+                width: 200px;
+                height: 280px;
+            }
+            
+            #text-box {
+                font-size: 1.1rem;
+                padding: 15px;
+            }
+            
+            #name-box {
+                width: 250px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="background"></div>
+        
+        <div id="thossc" class="character inactive">
+            <img src="https://i.imgur.com/3vM7j0L.png" alt="Thossc" class="character-img">
+        </div>
+        
+        <div id="minh-khoi" class="character inactive">
+            <img src="https://i.imgur.com/4QY2wzB.png" alt="Minh Khoi" class="character-img">
+        </div>
+        
+        <div id="skip-indicator">
+            <i class="fas fa-forward"></i> Skipping...
+        </div>
+        
+        <div id="auto-play-indicator">
+            <i class="fas fa-play-circle"></i> Auto-play enabled
+        </div>
+        
+        <div id="controls">
+            <button id="skip-btn" class="control-btn" title="Skip (Ctrl+S)">
+                <i class="fas fa-forward"></i>
+            </button>
+            <button id="auto-btn" class="control-btn" title="Auto-play (Ctrl+A)">
+                <i class="fas fa-play-circle"></i>
+            </button>
+            <button id="save-btn" class="control-btn" title="Save (Ctrl+Shift+S)">
+                <i class="fas fa-save"></i>
+            </button>
+            <button id="load-btn" class="control-btn" title="Load (Ctrl+L)">
+                <i class="fas fa-folder-open"></i>
+            </button>
+            <button id="menu-btn" class="control-btn" title="Menu (Esc)">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <div id="save-menu">
+            <div class="menu-header">
+                <h3>Save Game</h3>
+                <button class="close-menu" id="close-save">&times;</button>
+            </div>
+            <div class="slot" data-slot="1">
+                <div>Save Slot 1</div>
+                <div class="slot-date" id="save-date-1">Empty</div>
+            </div>
+            <div class="slot" data-slot="2">
+                <div>Save Slot 2</div>
+                <div class="slot-date" id="save-date-2">Empty</div>
+            </div>
+            <div class="slot" data-slot="3">
+                <div>Save Slot 3</div>
+                <div class="slot-date" id="save-date-3">Empty</div>
+            </div>
+        </div>
+        
+        <div id="load-menu">
+            <div class="menu-header">
+                <h3>Load Game</h3>
+                <button class="close-menu" id="close-load">&times;</button>
+            </div>
+            <div class="slot" data-slot="1">
+                <div>Save Slot 1</div>
+                <div class="slot-date" id="load-date-1">Empty</div>
+            </div>
+            <div class="slot" data-slot="2">
+                <div>Save Slot 2</div>
+                <div class="slot-date" id="load-date-2">Empty</div>
+            </div>
+            <div class="slot" data-slot="3">
+                <div>Save Slot 3</div>
+                <div class="slot-date" id="load-date-3">Empty</div>
+            </div>
+        </div>
+        
+        <div id="dialogue-container">
+            <div id="name-box">Lowerspace</div>
+            <div id="text-box">
+                Welcome to Lowerspace! A place where physics is optional and silliness is mandatory. Click to continue...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state and variables
+        let gameState = {
+            currentLine: 0,
+            currentScene: 'start',
+            autoPlay: false,
+            skipMode: false,
+            saveSlots: JSON.parse(localStorage.getItem('lowerspaceSaves')) || {
+                1: null, 2: null, 3: null
+            }
+        };
+
+        // DOM elements
+        const textBox = document.getElementById('text-box');
+        const nameBox = document.getElementById('name-box');
+        const thosscChar = document.getElementById('thossc');
+        const minhKhoiChar = document.getElementById('minh-khoi');
+        const background = document.getElementById('background');
+        const skipIndicator = document.getElementById('skip-indicator');
+        const autoPlayIndicator = document.getElementById('auto-play-indicator');
+        const saveMenu = document.getElementById('save-menu');
+        const loadMenu = document.getElementById('load-menu');
+        
+        // Control buttons
+        const skipBtn = document.getElementById('skip-btn');
+        const autoBtn = document.getElementById('auto-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const loadBtn = document.getElementById('load-btn');
+        const closeSaveBtn = document.getElementById('close-save');
+        const closeLoadBtn = document.getElementById('close-load');
+        
+        // Game script - the story
+        const script = {
+            start: [
+                {
+                    speaker: '',
+                    text: 'Welcome to Lowerspace! A place where physics is optional and silliness is mandatory. Click to continue...',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Thossc',
+                    text: 'Ok but hear me out. What if we replaced all gravity with a gentle, persistent tugging sensation. Like a cosmic blanket wanting a cuddle.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Minh Khoi',
+                    text: 'Thossc. The toaster just floated by again. It looked judgmental. Your anti-gravity field is making the appliances anxious.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Thossc',
+                    text: 'They\'re not anxious! They\'re *liberated*. Look, the spatula is doing figure-eights. That\'s pure joy.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Minh Khoi',
+                    text: 'It\'s hitting the light fixture. Also, my coffee is a wiggly orb in front of me. This is sipping-adjacent at best.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Thossc',
+                    text: 'You lack vision. Imagine: pizza delivery, but the pizza just… drifts into your dwelling. Like a delicious, cheesy satellite.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Minh Khoi',
+                    text: 'It would be cold. And it would bump into the floating toaster. We\'d have crumb-contaminated pepperoni.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Thossc',
+                    text: '…You\'ve just invented a new cuisine. *Toaster-orbital pizza*. We\'re rich.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Minh Khoi',
+                    text: 'We are sitting on a sentient beanbag that keeps sighing. We are not rich. We are weird.',
+                    background: 'normal'
+                },
+                {
+                    speaker: '',
+                    text: 'What should Thossc do next?',
+                    background: 'normal',
+                    choices: [
+                        {text: 'Fine. Compromise. Gravity, but only on Tuesdays and only for things that are vaguely blue.', nextScene: 'blueGravity'},
+                        {text: 'No, I stand by my cosmic blanket theory! Let\'s test it on the sighing beanbag.', nextScene: 'beanbagTest'}
+                    ]
+                }
+            ],
+            blueGravity: [
+                {
+                    speaker: 'Thossc',
+                    text: 'Fine. *Compromise.* Gravity, but only on Tuesdays and only for things that are vaguely blue.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Minh Khoi',
+                    text: 'Why blue?',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Thossc',
+                    text: 'Because the cosmic blanket is jealous of the sky. Obviously. Keep up, Khoi.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Minh Khoi',
+                    text: 'I\'m going to attempt to drink my orb-coffee. If I inhale it, I\'m blaming you and your cosmic blanket.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Thossc',
+                    text: 'A worthy risk! For science! And also for the eventual floating cheese.',
+                    background: 'normal'
+                },
+                {
+                    speaker: '',
+                    text: 'The cosmic blanket theory lives on, with a compromise. Blue things now have gravity on Tuesdays. Your coffee orb remains safely blue-free.',
+                    background: 'normal',
+                    choices: [
+                        {text: 'Restart the story', nextScene: 'start'}
+                    ]
+                }
+            ],
+            beanbagTest: [
+                {
+                    speaker: 'Thossc',
+                    text: 'No, I stand by my cosmic blanket theory! Let\'s test it on the sighing beanbag.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Minh Khoi',
+                    text: 'Thossc, no. The beanbag is already sentient and sighing. We don\'t need to give it existential dread too.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Thossc',
+                    text: 'It\'ll be fine! I\'ll just... gently adjust the gravitational constant in its immediate vicinity.',
+                    background: 'pulse'
+                },
+                {
+                    speaker: 'Narrator',
+                    text: 'Thossc waves a device that looks suspiciously like a TV remote with spaghetti attached. The beanbag emits a deep, resonant sigh that vibrates through the room.',
+                    background: 'pulse'
+                },
+                {
+                    speaker: 'Minh Khoi',
+                    text: 'Great. Now it\'s sighing in a minor key. I think you\'ve made it melancholic.',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Thossc',
+                    text: 'Or... it\'s sighing with contentment! Yes. The cosmic blanket theory is a success!',
+                    background: 'normal'
+                },
+                {
+                    speaker: 'Beanbag',
+                    text: '*Sighhhhh* (It does sound a bit more philosophical now)',
+                    background: 'normal'
+                },
+                {
+                    speaker: '',
+                    text: 'The beanbag now sighs with a profound, philosophical resonance. Thossc considers this a win. Minh Khoi just wants his coffee to stay in a cup.',
+                    background: 'normal',
+                    choices: [
+                        {text: 'Restart the story', nextScene: 'start'}
+                    ]
+                }
+            ]
+        };
+
+        // Initialize the game
+        function initGame() {
+            updateSaveDates();
+            displayLine();
+            
+            // Event listeners for controls
+            textBox.addEventListener('click', advanceScript);
+            
+            skipBtn.addEventListener('click', toggleSkip);
+            autoBtn.addEventListener('click', toggleAutoPlay);
+            saveBtn.addEventListener('click', () => toggleMenu(saveMenu));
+            loadBtn.addEventListener('click', () => toggleMenu(loadMenu));
+            closeSaveBtn.addEventListener('click', () => toggleMenu(saveMenu, false));
+            closeLoadBtn.addEventListener('click', () => toggleMenu(loadMenu, false));
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // Save slot click handlers
+            document.querySelectorAll('#save-menu .slot').forEach(slot => {
+                slot.addEventListener('click', () => saveGame(parseInt(slot.dataset.slot)));
+            });
+            
+            document.querySelectorAll('#load-menu .slot').forEach(slot => {
+                slot.addEventListener('click', () => loadGame(parseInt(slot.dataset.slot)));
+            });
+        }
+
+        // Display the current line
+        function displayLine() {
+            const scene = script[gameState.currentScene];
+            const line = scene[gameState.currentLine];
+            
+            if (!line) {
+                // If we're at the end of a scene with no choices, restart
+                gameState.currentScene = 'start';
+                gameState.currentLine = 0;
+                displayLine();
+                return;
+            }
+            
+            // Update name and text
+            nameBox.textContent = line.speaker || 'Lowerspace';
+            textBox.innerHTML = line.text;
+            
+            // Update character states
+            if (line.speaker === 'Thossc') {
+                thosscChar.classList.remove('inactive');
+                thosscChar.classList.add('active');
+                minhKhoiChar.classList.remove('active');
+                minhKhoiChar.classList.add('inactive');
+            } else if (line.speaker === 'Minh Khoi') {
+                minhKhoiChar.classList.remove('inactive');
+                minhKhoiChar.classList.add('active');
+                thosscChar.classList.remove('active');
+                thosscChar.classList.add('inactive');
+            } else {
+                // No one speaking or narrator
+                thosscChar.classList.remove('active');
+                thosscChar.classList.add('inactive');
+                minhKhoiChar.classList.remove('active');
+                minhKhoiChar.classList.add('inactive');
+            }
+            
+            // Update background effect
+            if (line.background === 'pulse') {
+                background.style.filter = 'brightness(1.1)';
+                setTimeout(() => {
+                    background.style.filter = 'brightness(1)';
+                }, 500);
+            } else {
+                background.style.filter = 'brightness(1)';
+            }
+            
+            // Check if this line has choices
+            if (line.choices) {
+                displayChoices(line.choices);
+            } else {
+                // Clear any existing choices
+                const existingChoices = document.querySelector('.choice-container');
+                if (existingChoices) {
+                    existingChoices.remove();
+                }
+            }
+            
+            // If auto-play is enabled, set a timeout for next line
+            if (gameState.autoPlay && !line.choices) {
+                clearTimeout(window.autoPlayTimeout);
+                window.autoPlayTimeout = setTimeout(advanceScript, 3000);
+            }
+        }
+
+        // Display choice buttons
+        function displayChoices(choices) {
+            // Clear any existing choices
+            const existingChoices = document.querySelector('.choice-container');
+            if (existingChoices) {
+                existingChoices.remove();
+            }
+            
+            // Create choice container
+            const choiceContainer = document.createElement('div');
+            choiceContainer.className = 'choice-container';
+            
+            // Add each choice as a button
+            choices.forEach(choice => {
+                const choiceBtn = document.createElement('button');
+                choiceBtn.className = 'choice-btn';
+                choiceBtn.textContent = choice.text;
+                choiceBtn.addEventListener('click', () => {
+                    gameState.currentScene = choice.nextScene;
+                    gameState.currentLine = 0;
+                    displayLine();
+                });
+                choiceContainer.appendChild(choiceBtn);
+            });
+            
+            textBox.appendChild(choiceContainer);
+        }
+
+        // Advance to the next line
+        function advanceScript() {
+            if (gameState.skipMode && !script[gameState.currentScene][gameState.currentLine].choices) {
+                // In skip mode, fast-forward to next choice or end
+                while (gameState.currentLine < script[gameState.currentScene].length - 1) {
+                    gameState.currentLine++;
+                    if (script[gameState.currentScene][gameState.currentLine].choices) {
+                        break;
+                    }
+                }
+            } else {
+                // Normal advancement
+                gameState.currentLine++;
+            }
+            
+            displayLine();
+        }
+
+        // Toggle skip mode
+        function toggleSkip() {
+            gameState.skipMode = !gameState.skipMode;
+            skipIndicator.style.display = gameState.skipMode ? 'block' : 'none';
+            skipBtn.style.background = gameState.skipMode ? 'rgba(147, 112, 219, 0.8)' : 'rgba(0, 0, 0, 0.6)';
+            
+            // If we're turning on skip mode, advance immediately
+            if (gameState.skipMode) {
+                advanceScript();
+            }
+        }
+
+        // Toggle auto-play mode
+        function toggleAutoPlay() {
+            gameState.autoPlay = !gameState.autoPlay;
+            autoPlayIndicator.style.display = gameState.autoPlay ? 'block' : 'none';
+            autoBtn.style.background = gameState.autoPlay ? 'rgba(147, 112, 219, 0.8)' : 'rgba(0, 0, 0, 0.6)';
+            
+            // If turning off auto-play, clear any pending timeout
+            if (!gameState.autoPlay) {
+                clearTimeout(window.autoPlayTimeout);
+            } else if (!script[gameState.currentScene][gameState.currentLine].choices) {
+                // If turning on and no choices, set timeout for next line
+                window.autoPlayTimeout = setTimeout(advanceScript, 3000);
+            }
+        }
+
+        // Toggle save/load menus
+        function toggleMenu(menu, forceState) {
+            const isVisible = menu.style.display === 'block';
+            const shouldShow = forceState !== undefined ? forceState : !isVisible;
+            
+            // Hide both menus first
+            saveMenu.style.display = 'none';
+            loadMenu.style.display = 'none';
+            
+            // Show the requested menu if needed
+            if (shouldShow) {
+                menu.style.display = 'block';
+                if (menu === loadMenu) {
+                    updateSaveDates();
+                }
+            }
+        }
+
+        // Save game to a slot
+        function saveGame(slot) {
+            const saveData = {
+                scene: gameState.currentScene,
+                line: gameState.currentLine,
+                timestamp: Date.now()
+            };
+            
+            gameState.saveSlots[slot] = saveData;
+            localStorage.setItem('lowerspaceSaves', JSON.stringify(gameState.saveSlots));
+            
+            // Update display
+            updateSaveDates();
+            alert(`Game saved to slot ${slot}!`);
+            toggleMenu(saveMenu, false);
+        }
+
+        // Load game from a slot
+        function loadGame(slot) {
+            const saveData = gameState.saveSlots[slot];
+            
+            if (!saveData) {
+                alert(`Slot ${slot} is empty!`);
+                return;
+            }
+            
+            gameState.currentScene = saveData.scene;
+            gameState.currentLine = saveData.line;
+            displayLine();
+            
+            toggleMenu(loadMenu, false);
+            alert(`Game loaded from slot ${slot}!`);
+        }
+
+        // Update save date displays
+        function updateSaveDates() {
+            for (let i = 1; i <= 3; i++) {
+                const saveData = gameState.saveSlots[i];
+                const saveDateElement = document.getElementById(`save-date-${i}`);
+                const loadDateElement = document.getElementById(`load-date-${i}`);
+                
+                if (saveData) {
+                    const date = new Date(saveData.timestamp);
+                    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    saveDateElement.textContent = dateStr;
+                    loadDateElement.textContent = dateStr;
+                } else {
+                    saveDateElement.textContent = 'Empty';
+                    loadDateElement.textContent = 'Empty';
+                }
+            }
+        }
+
+        // Handle keyboard shortcuts
+        function handleKeyPress(e) {
+            // Ctrl+S for skip
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                toggleSkip();
+            }
+            
+            // Ctrl+A for auto-play
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                toggleAutoPlay();
+            }
+            
+            // Ctrl+Shift+S for save
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                toggleMenu(saveMenu);
+            }
+            
+            // Ctrl+L for load
+            if (e.ctrlKey && e.key === 'l') {
+                e.preventDefault();
+                toggleMenu(loadMenu);
+            }
+            
+            // Space or Enter to advance
+            if ((e.key === ' ' || e.key === 'Enter') && e.target === document.body) {
+                e.preventDefault();
+                advanceScript();
+            }
+            
+            // Escape to close menus
+            if (e.key === 'Escape') {
+                saveMenu.style.display = 'none';
+                loadMenu.style.display = 'none';
+            }
+        }
+
+        // Start the game when page loads
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>
